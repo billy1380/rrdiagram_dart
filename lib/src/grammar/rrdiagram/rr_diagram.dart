@@ -71,7 +71,7 @@ class RRDiagram {
       int height2 = layoutInfo2.height;
       int y1 = yOffset + connectorOffset2;
       svgContent.addLineConnector(xOffset, y1, xOffset + 5, y1);
-      // TODO: add decorations (like arrows)?
+
       rrElement.toSVG(rrDiagramToSVG, xOffset + 5, yOffset, svgContent);
       svgContent.addLineConnector(
         xOffset + 5 + width2,
