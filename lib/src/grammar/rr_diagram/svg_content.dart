@@ -196,7 +196,14 @@ class SvgContent {
     String connectorColor = Utils.convertColorToHtml(
       rrDiagramToSvg.connectorColor,
     );
-    String cssClass = setCssClass("c", "fill:none;stroke:$connectorColor;");
+    if (rrDiagramToSvg.useInlineStyles) {
+      return '<path fill="none" stroke="$connectorColor" d="${path0!.getPath()}"/>$svgElementsSeparator';
+    }
+    String cssClass = setCssClass(
+      "c",
+      "fill:none;stroke:$connectorColor;",
+      useInlineStyles: false,
+    );
     return '<path class="$cssClass" d="${path0!.getPath()}"/>$svgElementsSeparator';
   }
 
@@ -216,7 +223,14 @@ class SvgContent {
         : (definition.endsWith(";") ? style : definition);
   }
 
-  String setCssClass(String cssClass, String definition) {
+  String setCssClass(
+    String cssClass,
+    String definition, {
+    bool useInlineStyles = false,
+  }) {
+    if (useInlineStyles) {
+      return definition;
+    }
     String def = definition.trim();
     if (!def.endsWith(";")) {
       throw ArgumentError(

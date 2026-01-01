@@ -247,9 +247,12 @@ class RrLoop extends RrElement {
     svgContent.addLineConnector(x2, y1 + 5, x2, y2 - 5);
     svgContent.addPathConnector(x2, y2 - 5, "q0 5-5 5", x2 - 5, y2);
     if (cardinalitiesText != null) {
-      String? cssClass = svgContent.getDefinedCssClass(
-        RrDiagram.cssLoopCardinalitiesTextClass,
-      );
+      String? cssClass;
+      if (!rrDiagramToSvg.useInlineStyles) {
+        cssClass = svgContent.getDefinedCssClass(
+          RrDiagram.cssLoopCardinalitiesTextClass,
+        );
+      }
       if (cssClass == null) {
         Font loopFont = rrDiagramToSvg.loopFont;
         String loopTextColor = Utils.convertColorToHtml(
@@ -258,10 +261,12 @@ class RrLoop extends RrElement {
         cssClass = svgContent.setCssClass(
           RrDiagram.cssLoopCardinalitiesTextClass,
           "fill:$loopTextColor;${Utils.convertFontToCss(loopFont)}",
+          useInlineStyles: rrDiagramToSvg.useInlineStyles,
         );
       }
+      String attr = rrDiagramToSvg.useInlineStyles ? "style" : "class";
       svgContent.addElement(
-        '<text class="$cssClass" x="${x2 - cardinalitiesWidth}" y="${y2 - fontYOffset - 5}">${Utils.escapeXml(cardinalitiesText)}</text>',
+        '<text $attr="$cssClass" x="${x2 - cardinalitiesWidth}" y="${y2 - fontYOffset - 5}">${Utils.escapeXml(cardinalitiesText)}</text>',
       );
     }
     rrElement.toSvg(
@@ -396,111 +401,139 @@ class RrText extends RrElement {
     }
     Insets insets;
     Font font;
+    Color fillColor;
+    Color borderColor;
+    Color textColor;
+    BoxShape shape;
+    // Helper to get defined class
     String? cssClass;
     String? cssTextClass;
-    BoxShape shape;
+
+    // Resolve styles based on type
     switch (type) {
       case RrTextType.rule:
         insets = rrDiagramToSvg.ruleInsets;
         font = rrDiagramToSvg.ruleFont;
-        cssClass = svgContent.getDefinedCssClass(RrDiagram.cssRuleClass);
-        cssTextClass = svgContent.getDefinedCssClass(
-          RrDiagram.cssRuleTextClass,
-        );
-        if (cssClass == null) {
-          String ruleBorderColor = Utils.convertColorToHtml(
-            rrDiagramToSvg.ruleBorderColor,
-          );
-          String ruleFillColor = Utils.convertColorToHtml(
-            rrDiagramToSvg.ruleFillColor,
-          );
-          Font ruleFont = rrDiagramToSvg.ruleFont;
-          String ruleTextColor = Utils.convertColorToHtml(
-            rrDiagramToSvg.ruleTextColor,
-          );
-          cssClass = svgContent.setCssClass(
-            RrDiagram.cssRuleClass,
-            "fill:$ruleFillColor;stroke:$ruleBorderColor;",
-          );
-          cssTextClass = svgContent.setCssClass(
+        fillColor = rrDiagramToSvg.ruleFillColor;
+        borderColor = rrDiagramToSvg.ruleBorderColor;
+        textColor = rrDiagramToSvg.ruleTextColor;
+        shape = rrDiagramToSvg.ruleShape;
+        if (!rrDiagramToSvg.useInlineStyles) {
+          cssClass = svgContent.getDefinedCssClass(RrDiagram.cssRuleClass);
+          cssTextClass = svgContent.getDefinedCssClass(
             RrDiagram.cssRuleTextClass,
-            "fill:$ruleTextColor;${Utils.convertFontToCss(ruleFont)}",
           );
         }
-        shape = rrDiagramToSvg.ruleShape;
         break;
       case RrTextType.literal:
         insets = rrDiagramToSvg.literalInsets;
         font = rrDiagramToSvg.literalFont;
-        cssClass = svgContent.getDefinedCssClass(RrDiagram.cssLiteralClass);
-        cssTextClass = svgContent.getDefinedCssClass(
-          RrDiagram.cssLiteralTextClass,
-        );
-        if (cssClass == null) {
-          String literalBorderColor = Utils.convertColorToHtml(
-            rrDiagramToSvg.literalBorderColor,
-          );
-          String literalFillColor = Utils.convertColorToHtml(
-            rrDiagramToSvg.literalFillColor,
-          );
-          Font literalFont = rrDiagramToSvg.literalFont;
-          String literalTextColor = Utils.convertColorToHtml(
-            rrDiagramToSvg.literalTextColor,
-          );
-          cssClass = svgContent.setCssClass(
-            RrDiagram.cssLiteralClass,
-            "fill:$literalFillColor;stroke:$literalBorderColor;",
-          );
-          cssTextClass = svgContent.setCssClass(
+        fillColor = rrDiagramToSvg.literalFillColor;
+        borderColor = rrDiagramToSvg.literalBorderColor;
+        textColor = rrDiagramToSvg.literalTextColor;
+        shape = rrDiagramToSvg.literalShape;
+        if (!rrDiagramToSvg.useInlineStyles) {
+          cssClass = svgContent.getDefinedCssClass(RrDiagram.cssLiteralClass);
+          cssTextClass = svgContent.getDefinedCssClass(
             RrDiagram.cssLiteralTextClass,
-            "fill:$literalTextColor;${Utils.convertFontToCss(literalFont)}",
           );
         }
-        shape = rrDiagramToSvg.literalShape;
         break;
       case RrTextType.specialSequence:
         insets = rrDiagramToSvg.specialSequenceInsets;
         font = rrDiagramToSvg.specialSequenceFont;
-        cssClass = svgContent.getDefinedCssClass(
-          RrDiagram.cssSpecialSequenceClass,
-        );
-        cssTextClass = svgContent.getDefinedCssClass(
-          RrDiagram.cssSpecialSequenceTextClass,
-        );
-        if (cssClass == null) {
-          String specialSequenceBorderColor = Utils.convertColorToHtml(
-            rrDiagramToSvg.specialSequenceBorderColor,
-          );
-          String specialSequenceFillColor = Utils.convertColorToHtml(
-            rrDiagramToSvg.specialSequenceFillColor,
-          );
-          Font specialSequenceFont = rrDiagramToSvg.specialSequenceFont;
-          String specialSequenceTextColor = Utils.convertColorToHtml(
-            rrDiagramToSvg.specialSequenceTextColor,
-          );
-          cssClass = svgContent.setCssClass(
+        fillColor = rrDiagramToSvg.specialSequenceFillColor;
+        borderColor = rrDiagramToSvg.specialSequenceBorderColor;
+        textColor = rrDiagramToSvg.specialSequenceTextColor;
+        shape = rrDiagramToSvg.specialSequenceShape;
+        if (!rrDiagramToSvg.useInlineStyles) {
+          cssClass = svgContent.getDefinedCssClass(
             RrDiagram.cssSpecialSequenceClass,
-            "fill:$specialSequenceFillColor;stroke:$specialSequenceBorderColor;",
           );
-          cssTextClass = svgContent.setCssClass(
+          cssTextClass = svgContent.getDefinedCssClass(
             RrDiagram.cssSpecialSequenceTextClass,
-            "fill:$specialSequenceTextColor;${Utils.convertFontToCss(specialSequenceFont)}",
           );
         }
-        shape = rrDiagramToSvg.specialSequenceShape;
         break;
     }
 
+    // Generate box attributes
+    String boxAttributes;
+    if (rrDiagramToSvg.useInlineStyles) {
+      String fill = Utils.convertColorToHtml(fillColor);
+      String stroke = Utils.convertColorToHtml(borderColor);
+      boxAttributes = 'fill="$fill" stroke="$stroke"';
+    } else {
+      // Create class if not defined
+      if (cssClass == null) {
+        String sFill = Utils.convertColorToHtml(fillColor);
+        String sStroke = Utils.convertColorToHtml(borderColor);
+        String className;
+        switch (type) {
+          case RrTextType.rule:
+            className = RrDiagram.cssRuleClass;
+            break;
+          case RrTextType.literal:
+            className = RrDiagram.cssLiteralClass;
+            break;
+          case RrTextType.specialSequence:
+            className = RrDiagram.cssSpecialSequenceClass;
+            break;
+        }
+        cssClass = svgContent.setCssClass(
+          className,
+          "fill:$sFill;stroke:$sStroke;",
+          useInlineStyles: false,
+        );
+      }
+      boxAttributes = 'class="$cssClass"';
+    }
+
+    // Generate text attributes (keep using style/class for text as it is complex)
+    String textAttributes;
+    if (rrDiagramToSvg.useInlineStyles) {
+      // Re-use logic to generate style string for text
+      String sText = Utils.convertColorToHtml(textColor);
+      String sFont = Utils.convertFontToCss(font);
+      // Note: setCssClass with inline=true simply returns the definition now (thanks to my previous fix)
+      String style = "fill:$sText;$sFont";
+      textAttributes = 'style="$style"';
+    } else {
+      if (cssTextClass == null) {
+        String sText = Utils.convertColorToHtml(textColor);
+        String sFont = Utils.convertFontToCss(font);
+        String className;
+        switch (type) {
+          case RrTextType.rule:
+            className = RrDiagram.cssRuleTextClass;
+            break;
+          case RrTextType.literal:
+            className = RrDiagram.cssLiteralTextClass;
+            break;
+          case RrTextType.specialSequence:
+            className = RrDiagram.cssSpecialSequenceTextClass;
+            break;
+        }
+        cssTextClass = svgContent.setCssClass(
+          className,
+          "fill:$sText;$sFont",
+          useInlineStyles: false,
+        );
+      }
+      textAttributes = 'class="$cssTextClass"';
+    }
+
+    // Draw Shape
     switch (shape) {
       case BoxShape.rectangle:
         svgContent.addElement(
-          '<rect class="$cssClass" x="$xOffset" y="$yOffset" width="$width" height="$height"/>',
+          '<rect $boxAttributes x="$xOffset" y="$yOffset" width="$width" height="$height"/>',
         );
         break;
       case BoxShape.roundedRectangle:
         int rx = (insets.left + insets.right + insets.top + insets.bottom) ~/ 4;
         svgContent.addElement(
-          '<rect class="$cssClass" x="$xOffset" y="$yOffset" width="$width" height="$height" rx="$rx"/>',
+          '<rect $boxAttributes x="$xOffset" y="$yOffset" width="$width" height="$height" rx="$rx"/>',
         );
         break;
       case BoxShape.hexagon:
@@ -512,7 +545,7 @@ class RrText extends RrElement {
           yOffset + connectorOffset,
         );
         svgContent.addElement(
-          '<polygon class="$cssClass" points="$xOffset ${yOffset + height / 2} ${xOffset + insets.left} $yOffset ${xOffset + width - insets.right} $yOffset ${xOffset + width} ${yOffset + height / 2} ${xOffset + width - insets.right} ${yOffset + height} ${xOffset + insets.left} ${yOffset + height}"/>',
+          '<polygon $boxAttributes points="$xOffset ${yOffset + height / 2} ${xOffset + insets.left} $yOffset ${xOffset + width - insets.right} $yOffset ${xOffset + width} ${yOffset + height / 2} ${xOffset + width - insets.right} ${yOffset + height} ${xOffset + insets.left} ${yOffset + height}"/>',
         );
         svgContent.addLineConnector(
           xOffset + width,
@@ -531,7 +564,7 @@ class RrText extends RrElement {
     int textYOffset =
         yOffset + insets.top + metrics.height.round() - fontYOffset;
     svgContent.addElement(
-      '<text class="$cssTextClass" x="$textXOffset" y="$textYOffset">${Utils.escapeXml(text)}</text>',
+      '<text $textAttributes x="$textXOffset" y="$textYOffset">${Utils.escapeXml(text)}</text>',
     );
     if (link != null) {
       svgContent.addElement("</a>");

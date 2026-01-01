@@ -90,7 +90,9 @@ class RrDiagram {
     sb.write(
       '<svg version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/2000/svg" width="$width" height="$height" viewbox="0 0 $width $height">${SvgContent.svgElementsSeparator}',
     );
-    String styles = svgContent.getCssStyles();
+    String styles = rrDiagramToSvg.useInlineStyles
+        ? ""
+        : svgContent.getCssStyles();
     if (styles.isNotEmpty) {
       sb.write(
         '<defs><style type="text/css">${SvgContent.svgElementsSeparator}',

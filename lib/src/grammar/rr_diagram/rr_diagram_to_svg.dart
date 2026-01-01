@@ -8,8 +8,9 @@ enum BoxShape { rectangle, roundedRectangle, hexagon }
 class RrDiagramToSvg {
   // The "Fix": Injectable text measurer
   final TextMeasurer textMeasurer;
+  final bool useInlineStyles;
 
-  RrDiagramToSvg({TextMeasurer? textMeasurer})
+  RrDiagramToSvg({TextMeasurer? textMeasurer, this.useInlineStyles = false})
     : textMeasurer = textMeasurer ?? EstimatedTextMeasurer();
 
   String convert(RrDiagram rrDiagram) {
