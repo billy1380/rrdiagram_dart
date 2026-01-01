@@ -1,4 +1,4 @@
-import 'package:rrdiagram_dart/rrdiagram_dart.dart';
+import "package:rrdiagram_dart/rr_diagram_dart.dart";
 
 void main() {
   // Define a complex grammar rule
@@ -19,19 +19,19 @@ void main() {
     ]),
   );
 
-  final grammarToRRDiagram = GrammarToRRDiagram();
+  final grammarToRrDiagram = GrammarToRrDiagram();
 
   // Create the diagram generator config
-  final rrDiagramToSVG = RRDiagramToSVG();
+  final rrDiagramToSvg = RrDiagramToSvg();
 
   // You can customize colors and fonts
-  rrDiagramToSVG.ruleFillColor = const Color(200, 255, 200);
+  rrDiagramToSvg.ruleFillColor = const Color(200, 255, 200);
 
   // Generate the diagram
-  final rrDiagram = grammarToRRDiagram.convert(rule);
+  final rrDiagram = grammarToRrDiagram.convert(rule);
 
   // Convert to SVG string
-  final svg = rrDiagramToSVG.convert(rrDiagram);
+  final svg = rrDiagramToSvg.convert(rrDiagram);
 
   print(svg);
 }

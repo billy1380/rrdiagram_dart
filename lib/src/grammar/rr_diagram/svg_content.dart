@@ -1,6 +1,6 @@
-import 'dart:math';
-import '../../common/utils.dart';
-import 'rr_diagram_to_svg.dart';
+import "dart:math";
+import "../../common/utils.dart";
+import "rr_diagram_to_svg.dart";
 
 abstract class SvgConnector {}
 
@@ -18,15 +18,15 @@ class SvgPath extends SvgConnector {
   void addPath(int x1, int y1, String path, int x2, int y2) {
     if (x1 != endX || y1 != endY) {
       if (x1 == endX && y1 == endY + 1) {
-        pathSB.write('v${y1 - y2}');
+        pathSB.write("v${y1 - y2}");
       } else if (y1 == endY && x1 == endX + 1) {
-        pathSB.write('h${x1 - x2}');
+        pathSB.write("h${x1 - x2}");
       } else {
-        pathSB.write('m${x1 - endX}');
+        pathSB.write("m${x1 - endX}");
         if (y1 - endY >= 0) {
-          pathSB.write(' ');
+          pathSB.write(" ");
         }
-        pathSB.write('${y1 - endY}');
+        pathSB.write("${y1 - endY}");
       }
     }
     pathSB.write(path);
@@ -51,42 +51,42 @@ class SvgPath extends SvgConnector {
     int y2 = svgLine.y2;
     if (x1 == x2 && endX == x1) {
       if (endY == y1 || endY == y1 - 1) {
-        pathSB.write('v${y2 - endY}');
+        pathSB.write("v${y2 - endY}");
         endY = y2;
         return;
       }
       if (endY == y2 || endY == y2 + 1) {
-        pathSB.write('v${y1 - endY}');
+        pathSB.write("v${y1 - endY}");
         endY = y1;
         return;
       }
     } else if (y1 == y2 && endY == y1) {
       if (endX == x1 || endX == x1 - 1) {
-        pathSB.write('h${x2 - endX}');
+        pathSB.write("h${x2 - endX}");
         endX = x2;
         return;
       }
       if (endX == x2 || endX == x2 + 1) {
-        pathSB.write('h${x1 - endX}');
+        pathSB.write("h${x1 - endX}");
         endX = x1;
         return;
       }
     }
-    pathSB.write('m${x1 - endX}');
+    pathSB.write("m${x1 - endX}");
     if (y1 - endY >= 0) {
-      pathSB.write(' ');
+      pathSB.write(" ");
     }
-    pathSB.write('${y1 - endY}');
+    pathSB.write("${y1 - endY}");
     if (x1 == x2) {
-      pathSB.write('v${y2 - y1}');
+      pathSB.write("v${y2 - y1}");
     } else if (y1 == y2) {
-      pathSB.write('h${x2 - x1}');
+      pathSB.write("h${x2 - x1}");
     } else {
-      pathSB.write('l${x2 - x1}');
+      pathSB.write("l${x2 - x1}");
       if (y2 - y1 >= 0) {
-        pathSB.write(' ');
+        pathSB.write(" ");
       }
-      pathSB.write('${y2 - y1}');
+      pathSB.write("${y2 - y1}");
     }
     endX = x2;
     endY = y2;
@@ -170,7 +170,7 @@ class SvgContent {
     }
   }
 
-  String getConnectorElement(RRDiagramToSVG rrDiagramToSVG) {
+  String getConnectorElement(RrDiagramToSvg rrDiagramToSVG) {
     if (connectorList.isEmpty) {
       return "";
     }
@@ -196,7 +196,7 @@ class SvgContent {
     String connectorColor = Utils.convertColorToHtml(
       rrDiagramToSVG.connectorColor,
     );
-    String cssClass = setCSSClass("c", "fill:none;stroke:$connectorColor;");
+    String cssClass = setCssClass("c", "fill:none;stroke:$connectorColor;");
     return '<path class="$cssClass" d="${path0!.getPath()}"/>$svgElementsSeparator';
   }
 
@@ -209,14 +209,14 @@ class SvgContent {
     return elementsSB.toString();
   }
 
-  String? getDefinedCSSClass(String style) {
+  String? getDefinedCssClass(String style) {
     String? definition = cssClassToDefinitionMap[style];
     return definition == null
         ? null
         : (definition.endsWith(";") ? style : definition);
   }
 
-  String setCSSClass(String cssClass, String definition) {
+  String setCssClass(String cssClass, String definition) {
     String def = definition.trim();
     if (!def.endsWith(";")) {
       throw ArgumentError(
@@ -246,7 +246,7 @@ class SvgContent {
     return cssClass;
   }
 
-  String getCSSStyles() {
+  String getCssStyles() {
     final sb = StringBuffer();
     final cssClasses = cssClassToDefinitionMap.keys.toList()..sort();
     for (int i = 0; i < cssClasses.length; i++) {

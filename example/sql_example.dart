@@ -1,4 +1,4 @@
-import 'package:rrdiagram_dart/rrdiagram_dart.dart';
+import "package:rrdiagram_dart/rr_diagram_dart.dart";
 
 void main() {
   // Construct the H2_SELECT grammar rule:
@@ -67,12 +67,12 @@ void main() {
     ]),
   );
 
-  final grammarToRRDiagram = GrammarToRRDiagram();
-  final rrDiagramToSVG = RRDiagramToSVG();
+  final grammarToRrDiagram = GrammarToRrDiagram();
+  final rrDiagramToSvg = RrDiagramToSvg();
 
   // Convert and generate SVG
-  final rrDiagram = grammarToRRDiagram.convert(h2select);
-  final svg = rrDiagramToSVG.convert(rrDiagram);
+  final rrDiagram = grammarToRrDiagram.convert(h2select);
+  final svg = rrDiagramToSvg.convert(rrDiagram);
 
   print(svg);
 }

@@ -1,29 +1,29 @@
-import 'ui_types.dart';
-import 'font.dart';
+import "ui_types.dart";
+import "font.dart";
 
 class Utils {
-  static String escapeXML(String? s) {
+  static String escapeXml(String? s) {
     if (s == null || s.isEmpty) {
-      return s ?? '';
+      return s ?? "";
     }
     final sb = StringBuffer();
     for (int i = 0; i < s.length; i++) {
       final c = s[i];
       switch (c) {
-        case '<':
-          sb.write('&lt;');
+        case "<":
+          sb.write("&lt;");
           break;
-        case '>':
-          sb.write('&gt;');
+        case ">":
+          sb.write("&gt;");
           break;
-        case '&':
-          sb.write('&amp;');
+        case "&":
+          sb.write("&amp;");
           break;
-        case '\'':
-          sb.write('&apos;');
+        case "'":
+          sb.write("&apos;");
           break;
         case '"':
-          sb.write('&quot;');
+          sb.write("&quot;");
           break;
         default:
           sb.write(c);
@@ -39,14 +39,14 @@ class Utils {
 
   static String convertFontToCss(Font font) {
     final sb = StringBuffer();
-    sb.write('font-family:${font.name},Sans-serif;');
+    sb.write("font-family:${font.name},Sans-serif;");
     if (font.isItalic) {
-      sb.write('font-style:italic;');
+      sb.write("font-style:italic;");
     }
     if (font.isBold) {
-      sb.write('font-weight:bold;');
+      sb.write("font-weight:bold;");
     }
-    sb.write('font-size:${font.size}px;');
+    sb.write("font-size:${font.size}px;");
     return sb.toString();
   }
 }

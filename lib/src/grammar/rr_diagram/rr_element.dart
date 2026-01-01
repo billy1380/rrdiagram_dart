@@ -1,13 +1,13 @@
-import 'dart:math';
-import '../../common/ui_types.dart';
-import '../../common/font.dart';
-import '../../common/utils.dart';
-import 'layout_info.dart';
-import 'rr_diagram_to_svg.dart';
-import 'svg_content.dart';
-import 'rr_diagram.dart'; // For CSS constants
+import "dart:math";
+import "../../common/ui_types.dart";
+import "../../common/font.dart";
+import "../../common/utils.dart";
+import "layout_info.dart";
+import "rr_diagram_to_svg.dart";
+import "svg_content.dart";
+import "rr_diagram.dart"; // For CSS constants
 
-abstract class RRElement {
+abstract class RrElement {
   LayoutInfo? _layoutInfo;
 
   void setLayoutInfo(LayoutInfo layoutInfo) {
@@ -18,27 +18,27 @@ abstract class RRElement {
     return _layoutInfo!;
   }
 
-  void computeLayoutInfo(RRDiagramToSVG rrDiagramToSVG);
+  void computeLayoutInfo(RrDiagramToSvg rrDiagramToSvg);
 
-  void toSVG(
-    RRDiagramToSVG rrDiagramToSVG,
+  void toSvg(
+    RrDiagramToSvg rrDiagramToSvg,
     int xOffset,
     int yOffset,
     SvgContent svgContent,
   );
 }
 
-class RRBreak extends RRElement {
+class RrBreak extends RrElement {
   @override
-  void computeLayoutInfo(RRDiagramToSVG rrDiagramToSVG) {
+  void computeLayoutInfo(RrDiagramToSvg rrDiagramToSvg) {
     throw StateError(
       "This element must not be nested and should have been processed before entering generation.",
     );
   }
 
   @override
-  void toSVG(
-    RRDiagramToSVG rrDiagramToSVG,
+  void toSvg(
+    RrDiagramToSvg rrDiagramToSvg,
     int xOffset,
     int yOffset,
     SvgContent svgContent,
@@ -49,19 +49,19 @@ class RRBreak extends RRElement {
   }
 }
 
-class RRChoice extends RRElement {
-  final List<RRElement> rrElements;
+class RrChoice extends RrElement {
+  final List<RrElement> rrElements;
 
-  RRChoice(this.rrElements);
+  RrChoice(this.rrElements);
 
   @override
-  void computeLayoutInfo(RRDiagramToSVG rrDiagramToSVG) {
+  void computeLayoutInfo(RrDiagramToSvg rrDiagramToSvg) {
     int width = 0;
     int height = 0;
     int connectorOffset = 0;
     for (int i = 0; i < rrElements.length; i++) {
-      RRElement rrElement = rrElements[i];
-      rrElement.computeLayoutInfo(rrDiagramToSVG);
+      RrElement rrElement = rrElements[i];
+      rrElement.computeLayoutInfo(rrDiagramToSvg);
       LayoutInfo layoutInfo = rrElement.getLayoutInfo();
       if (i == 0) {
         connectorOffset = layoutInfo.connectorOffset;
@@ -76,8 +76,8 @@ class RRChoice extends RRElement {
   }
 
   @override
-  void toSVG(
-    RRDiagramToSVG rrDiagramToSVG,
+  void toSvg(
+    RrDiagramToSvg rrDiagramToSvg,
     int xOffset,
     int yOffset,
     SvgContent svgContent,
@@ -90,7 +90,7 @@ class RRChoice extends RRElement {
     int y2 = 0;
     int yOffset2 = yOffset;
     for (int i = 0; i < rrElements.length; i++) {
-      RRElement rrElement = rrElements[i];
+      RrElement rrElement = rrElements[i];
       LayoutInfo layoutInfo2 = rrElement.getLayoutInfo();
       int width = layoutInfo2.width;
       int height = layoutInfo2.height;
@@ -108,7 +108,7 @@ class RRChoice extends RRElement {
         svgContent.addPathConnector(x1, y2 - 5, "q0 5 5 5", x1 + 5, y2);
         svgContent.addLineConnector(x1 + 5, y2, xOffset2, y2);
       }
-      rrElement.toSVG(rrDiagramToSVG, xOffset2, yOffset2, svgContent);
+      rrElement.toSvg(rrDiagramToSvg, xOffset2, yOffset2, svgContent);
       if (i == 0) {
         // Line to first element
         svgContent.addLineConnector(xOffset2 + width, y2, x2 + 10, y2);
@@ -127,28 +127,28 @@ class RRChoice extends RRElement {
   }
 }
 
-class RRLine extends RRElement {
+class RrLine extends RrElement {
   @override
-  void computeLayoutInfo(RRDiagramToSVG rrDiagramToSVG) {
+  void computeLayoutInfo(RrDiagramToSvg rrDiagramToSvg) {
     setLayoutInfo(const LayoutInfo(0, 10, 5));
   }
 
   @override
-  void toSVG(
-    RRDiagramToSVG rrDiagramToSVG,
+  void toSvg(
+    RrDiagramToSvg rrDiagramToSvg,
     int xOffset,
     int yOffset,
     SvgContent svgContent,
   ) {}
 }
 
-class RRLoop extends RRElement {
-  final RRElement rrElement;
-  final RRElement? loopElement;
+class RrLoop extends RrElement {
+  final RrElement rrElement;
+  final RrElement? loopElement;
   final int minRepetitionCount;
   final int? maxRepetitionCount;
 
-  RRLoop(
+  RrLoop(
     this.rrElement,
     this.loopElement, [
     this.minRepetitionCount = 0,
@@ -160,16 +160,16 @@ class RRLoop extends RRElement {
   int fontYOffset = 0;
 
   @override
-  void computeLayoutInfo(RRDiagramToSVG rrDiagramToSVG) {
+  void computeLayoutInfo(RrDiagramToSvg rrDiagramToSvg) {
     cardinalitiesText = null;
     cardinalitiesWidth = 0;
     fontYOffset = 0;
     if (minRepetitionCount > 0 || maxRepetitionCount != null) {
       cardinalitiesText = "$minRepetitionCount..${maxRepetitionCount ?? "N"}";
-      Font font = rrDiagramToSVG.loopFont;
+      Font font = rrDiagramToSvg.loopFont;
 
       // Use the textMeasurer
-      final metrics = rrDiagramToSVG.textMeasurer.measure(
+      final metrics = rrDiagramToSvg.textMeasurer.measure(
         cardinalitiesText!,
         font,
       );
@@ -177,13 +177,13 @@ class RRLoop extends RRElement {
       fontYOffset = metrics.descent.round();
       cardinalitiesWidth = metrics.width.round() + 2;
     }
-    rrElement.computeLayoutInfo(rrDiagramToSVG);
+    rrElement.computeLayoutInfo(rrDiagramToSvg);
     LayoutInfo layoutInfo1 = rrElement.getLayoutInfo();
     int width = layoutInfo1.width;
     int height = layoutInfo1.height;
     int connectorOffset = layoutInfo1.connectorOffset;
     if (loopElement != null) {
-      loopElement!.computeLayoutInfo(rrDiagramToSVG);
+      loopElement!.computeLayoutInfo(rrDiagramToSvg);
       LayoutInfo layoutInfo2 = loopElement!.getLayoutInfo();
       width = max(width, layoutInfo2.width);
       int height2 = layoutInfo2.height;
@@ -198,8 +198,8 @@ class RRLoop extends RRElement {
   }
 
   @override
-  void toSVG(
-    RRDiagramToSVG rrDiagramToSVG,
+  void toSvg(
+    RrDiagramToSvg rrDiagramToSvg,
     int xOffset,
     int yOffset,
     SvgContent svgContent,
@@ -239,7 +239,7 @@ class RRLoop extends RRElement {
     svgContent.addPathConnector(x1, y1 + 5, "q0-5 5-5", x1 + 5, y1);
     if (loopElement != null) {
       svgContent.addLineConnector(x1 + 5, y1, loopOffset, y1);
-      loopElement!.toSVG(rrDiagramToSVG, loopOffset, yOffset, svgContent);
+      loopElement!.toSvg(rrDiagramToSvg, loopOffset, yOffset, svgContent);
       loopPathStartX = loopOffset + loopWidth;
     }
     svgContent.addLineConnector(loopPathStartX, y1, x2 - 5, y1);
@@ -247,25 +247,25 @@ class RRLoop extends RRElement {
     svgContent.addLineConnector(x2, y1 + 5, x2, y2 - 5);
     svgContent.addPathConnector(x2, y2 - 5, "q0 5-5 5", x2 - 5, y2);
     if (cardinalitiesText != null) {
-      String? cssClass = svgContent.getDefinedCSSClass(
-        RRDiagram.cssLoopCardinalitiesTextClass,
+      String? cssClass = svgContent.getDefinedCssClass(
+        RrDiagram.cssLoopCardinalitiesTextClass,
       );
       if (cssClass == null) {
-        Font loopFont = rrDiagramToSVG.loopFont;
+        Font loopFont = rrDiagramToSvg.loopFont;
         String loopTextColor = Utils.convertColorToHtml(
-          rrDiagramToSVG.loopTextColor,
+          rrDiagramToSvg.loopTextColor,
         );
-        cssClass = svgContent.setCSSClass(
-          RRDiagram.cssLoopCardinalitiesTextClass,
+        cssClass = svgContent.setCssClass(
+          RrDiagram.cssLoopCardinalitiesTextClass,
           "fill:$loopTextColor;${Utils.convertFontToCss(loopFont)}",
         );
       }
       svgContent.addElement(
-        '<text class="$cssClass" x="${x2 - cardinalitiesWidth}" y="${y2 - fontYOffset - 5}">${Utils.escapeXML(cardinalitiesText)}</text>',
+        '<text class="$cssClass" x="${x2 - cardinalitiesWidth}" y="${y2 - fontYOffset - 5}">${Utils.escapeXml(cardinalitiesText)}</text>',
       );
     }
-    rrElement.toSVG(
-      rrDiagramToSVG,
+    rrElement.toSvg(
+      rrDiagramToSvg,
       xOffset + 20 + (maxWidth - width1) ~/ 2,
       yOffset2,
       svgContent,
@@ -279,19 +279,19 @@ class RRLoop extends RRElement {
   }
 }
 
-class RRSequence extends RRElement {
-  final List<RRElement> rrElements;
+class RrSequence extends RrElement {
+  final List<RrElement> rrElements;
 
-  RRSequence(this.rrElements);
+  RrSequence(this.rrElements);
 
   @override
-  void computeLayoutInfo(RRDiagramToSVG rrDiagramToSVG) {
+  void computeLayoutInfo(RrDiagramToSvg rrDiagramToSvg) {
     int width = 0;
     int aboveConnector = 0;
     int belowConnector = 0;
     for (int i = 0; i < rrElements.length; i++) {
-      RRElement rrElement = rrElements[i];
-      rrElement.computeLayoutInfo(rrDiagramToSVG);
+      RrElement rrElement = rrElements[i];
+      rrElement.computeLayoutInfo(rrDiagramToSvg);
       if (i > 0) {
         width += 10;
       }
@@ -308,8 +308,8 @@ class RRSequence extends RRElement {
   }
 
   @override
-  void toSVG(
-    RRDiagramToSVG rrDiagramToSVG,
+  void toSvg(
+    RrDiagramToSvg rrDiagramToSvg,
     int xOffset,
     int yOffset,
     SvgContent svgContent,
@@ -318,7 +318,7 @@ class RRSequence extends RRElement {
     int connectorOffset = layoutInfo.connectorOffset;
     int widthOffset = 0;
     for (int i = 0; i < rrElements.length; i++) {
-      RRElement rrElement = rrElements[i];
+      RrElement rrElement = rrElements[i];
       LayoutInfo layoutInfo2 = rrElement.getLayoutInfo();
       int width2 = layoutInfo2.width;
       int connectorOffset2 = layoutInfo2.connectorOffset;
@@ -332,45 +332,45 @@ class RRSequence extends RRElement {
           yOffset + connectorOffset,
         );
       }
-      rrElement.toSVG(rrDiagramToSVG, xOffset2, yOffset2, svgContent);
+      rrElement.toSvg(rrDiagramToSvg, xOffset2, yOffset2, svgContent);
       widthOffset += 10;
       widthOffset += width2;
     }
   }
 }
 
-enum RRTextType { literal, rule, specialSequence }
+enum RrTextType { literal, rule, specialSequence }
 
-class RRText extends RRElement {
-  final RRTextType type;
+class RrText extends RrElement {
+  final RrTextType type;
   final String text;
   final String? link;
 
-  RRText(this.type, this.text, this.link);
+  RrText(this.type, this.text, this.link);
 
   int fontYOffset = 0;
 
   @override
-  void computeLayoutInfo(RRDiagramToSVG rrDiagramToSVG) {
+  void computeLayoutInfo(RrDiagramToSvg rrDiagramToSvg) {
     Font font;
     Insets insets;
     switch (type) {
-      case RRTextType.rule:
-        insets = rrDiagramToSVG.ruleInsets;
-        font = rrDiagramToSVG.ruleFont;
+      case RrTextType.rule:
+        insets = rrDiagramToSvg.ruleInsets;
+        font = rrDiagramToSvg.ruleFont;
         break;
-      case RRTextType.literal:
-        insets = rrDiagramToSVG.literalInsets;
-        font = rrDiagramToSVG.literalFont;
+      case RrTextType.literal:
+        insets = rrDiagramToSvg.literalInsets;
+        font = rrDiagramToSvg.literalFont;
         break;
-      case RRTextType.specialSequence:
-        insets = rrDiagramToSVG.specialSequenceInsets;
-        font = rrDiagramToSVG.specialSequenceFont;
+      case RrTextType.specialSequence:
+        insets = rrDiagramToSvg.specialSequenceInsets;
+        font = rrDiagramToSvg.specialSequenceFont;
         break;
     }
 
     // Use the textMeasurer
-    final metrics = rrDiagramToSVG.textMeasurer.measure(text, font);
+    final metrics = rrDiagramToSvg.textMeasurer.measure(text, font);
     fontYOffset = metrics.descent.round();
     int width = metrics.width.round();
     int height = metrics.height.round();
@@ -382,8 +382,8 @@ class RRText extends RRElement {
   }
 
   @override
-  void toSVG(
-    RRDiagramToSVG rrDiagramToSVG,
+  void toSvg(
+    RrDiagramToSvg rrDiagramToSvg,
     int xOffset,
     int yOffset,
     SvgContent svgContent,
@@ -392,7 +392,7 @@ class RRText extends RRElement {
     int width = layoutInfo.width;
     int height = layoutInfo.height;
     if (link != null) {
-      svgContent.addElement('<a xlink:href="${Utils.escapeXML(link)}">');
+      svgContent.addElement('<a xlink:href="${Utils.escapeXml(link)}">');
     }
     Insets insets;
     Font font;
@@ -400,94 +400,94 @@ class RRText extends RRElement {
     String? cssTextClass;
     BoxShape shape;
     switch (type) {
-      case RRTextType.rule:
-        insets = rrDiagramToSVG.ruleInsets;
-        font = rrDiagramToSVG.ruleFont;
-        cssClass = svgContent.getDefinedCSSClass(RRDiagram.cssRuleClass);
-        cssTextClass = svgContent.getDefinedCSSClass(
-          RRDiagram.cssRuleTextClass,
+      case RrTextType.rule:
+        insets = rrDiagramToSvg.ruleInsets;
+        font = rrDiagramToSvg.ruleFont;
+        cssClass = svgContent.getDefinedCssClass(RrDiagram.cssRuleClass);
+        cssTextClass = svgContent.getDefinedCssClass(
+          RrDiagram.cssRuleTextClass,
         );
         if (cssClass == null) {
           String ruleBorderColor = Utils.convertColorToHtml(
-            rrDiagramToSVG.ruleBorderColor,
+            rrDiagramToSvg.ruleBorderColor,
           );
           String ruleFillColor = Utils.convertColorToHtml(
-            rrDiagramToSVG.ruleFillColor,
+            rrDiagramToSvg.ruleFillColor,
           );
-          Font ruleFont = rrDiagramToSVG.ruleFont;
+          Font ruleFont = rrDiagramToSvg.ruleFont;
           String ruleTextColor = Utils.convertColorToHtml(
-            rrDiagramToSVG.ruleTextColor,
+            rrDiagramToSvg.ruleTextColor,
           );
-          cssClass = svgContent.setCSSClass(
-            RRDiagram.cssRuleClass,
+          cssClass = svgContent.setCssClass(
+            RrDiagram.cssRuleClass,
             "fill:$ruleFillColor;stroke:$ruleBorderColor;",
           );
-          cssTextClass = svgContent.setCSSClass(
-            RRDiagram.cssRuleTextClass,
+          cssTextClass = svgContent.setCssClass(
+            RrDiagram.cssRuleTextClass,
             "fill:$ruleTextColor;${Utils.convertFontToCss(ruleFont)}",
           );
         }
-        shape = rrDiagramToSVG.ruleShape;
+        shape = rrDiagramToSvg.ruleShape;
         break;
-      case RRTextType.literal:
-        insets = rrDiagramToSVG.literalInsets;
-        font = rrDiagramToSVG.literalFont;
-        cssClass = svgContent.getDefinedCSSClass(RRDiagram.cssLiteralClass);
-        cssTextClass = svgContent.getDefinedCSSClass(
-          RRDiagram.cssLiteralTextClass,
+      case RrTextType.literal:
+        insets = rrDiagramToSvg.literalInsets;
+        font = rrDiagramToSvg.literalFont;
+        cssClass = svgContent.getDefinedCssClass(RrDiagram.cssLiteralClass);
+        cssTextClass = svgContent.getDefinedCssClass(
+          RrDiagram.cssLiteralTextClass,
         );
         if (cssClass == null) {
           String literalBorderColor = Utils.convertColorToHtml(
-            rrDiagramToSVG.literalBorderColor,
+            rrDiagramToSvg.literalBorderColor,
           );
           String literalFillColor = Utils.convertColorToHtml(
-            rrDiagramToSVG.literalFillColor,
+            rrDiagramToSvg.literalFillColor,
           );
-          Font literalFont = rrDiagramToSVG.literalFont;
+          Font literalFont = rrDiagramToSvg.literalFont;
           String literalTextColor = Utils.convertColorToHtml(
-            rrDiagramToSVG.literalTextColor,
+            rrDiagramToSvg.literalTextColor,
           );
-          cssClass = svgContent.setCSSClass(
-            RRDiagram.cssLiteralClass,
+          cssClass = svgContent.setCssClass(
+            RrDiagram.cssLiteralClass,
             "fill:$literalFillColor;stroke:$literalBorderColor;",
           );
-          cssTextClass = svgContent.setCSSClass(
-            RRDiagram.cssLiteralTextClass,
+          cssTextClass = svgContent.setCssClass(
+            RrDiagram.cssLiteralTextClass,
             "fill:$literalTextColor;${Utils.convertFontToCss(literalFont)}",
           );
         }
-        shape = rrDiagramToSVG.literalShape;
+        shape = rrDiagramToSvg.literalShape;
         break;
-      case RRTextType.specialSequence:
-        insets = rrDiagramToSVG.specialSequenceInsets;
-        font = rrDiagramToSVG.specialSequenceFont;
-        cssClass = svgContent.getDefinedCSSClass(
-          RRDiagram.cssSpecialSequenceClass,
+      case RrTextType.specialSequence:
+        insets = rrDiagramToSvg.specialSequenceInsets;
+        font = rrDiagramToSvg.specialSequenceFont;
+        cssClass = svgContent.getDefinedCssClass(
+          RrDiagram.cssSpecialSequenceClass,
         );
-        cssTextClass = svgContent.getDefinedCSSClass(
-          RRDiagram.cssSpecialSequenceTextClass,
+        cssTextClass = svgContent.getDefinedCssClass(
+          RrDiagram.cssSpecialSequenceTextClass,
         );
         if (cssClass == null) {
           String specialSequenceBorderColor = Utils.convertColorToHtml(
-            rrDiagramToSVG.specialSequenceBorderColor,
+            rrDiagramToSvg.specialSequenceBorderColor,
           );
           String specialSequenceFillColor = Utils.convertColorToHtml(
-            rrDiagramToSVG.specialSequenceFillColor,
+            rrDiagramToSvg.specialSequenceFillColor,
           );
-          Font specialSequenceFont = rrDiagramToSVG.specialSequenceFont;
+          Font specialSequenceFont = rrDiagramToSvg.specialSequenceFont;
           String specialSequenceTextColor = Utils.convertColorToHtml(
-            rrDiagramToSVG.specialSequenceTextColor,
+            rrDiagramToSvg.specialSequenceTextColor,
           );
-          cssClass = svgContent.setCSSClass(
-            RRDiagram.cssSpecialSequenceClass,
+          cssClass = svgContent.setCssClass(
+            RrDiagram.cssSpecialSequenceClass,
             "fill:$specialSequenceFillColor;stroke:$specialSequenceBorderColor;",
           );
-          cssTextClass = svgContent.setCSSClass(
-            RRDiagram.cssSpecialSequenceTextClass,
+          cssTextClass = svgContent.setCssClass(
+            RrDiagram.cssSpecialSequenceTextClass,
             "fill:$specialSequenceTextColor;${Utils.convertFontToCss(specialSequenceFont)}",
           );
         }
-        shape = rrDiagramToSVG.specialSequenceShape;
+        shape = rrDiagramToSvg.specialSequenceShape;
         break;
     }
 
@@ -525,13 +525,13 @@ class RRText extends RRElement {
 
     // Recalculate stringBounds just for height reference if needed, but we have it in layoutInfo and textMeasurer result
     // The original code used font.getStringBounds again here.
-    final metrics = rrDiagramToSVG.textMeasurer.measure(text, font);
+    final metrics = rrDiagramToSvg.textMeasurer.measure(text, font);
 
     int textXOffset = xOffset + insets.left;
     int textYOffset =
         yOffset + insets.top + metrics.height.round() - fontYOffset;
     svgContent.addElement(
-      '<text class="$cssTextClass" x="$textXOffset" y="$textYOffset">${Utils.escapeXML(text)}</text>',
+      '<text class="$cssTextClass" x="$textXOffset" y="$textYOffset">${Utils.escapeXml(text)}</text>',
     );
     if (link != null) {
       svgContent.addElement("</a>");

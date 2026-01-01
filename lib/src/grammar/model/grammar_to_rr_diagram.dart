@@ -1,6 +1,6 @@
-import '../rrdiagram/rr_diagram.dart';
-import 'rule.dart';
-import 'grammar.dart';
+import "../rr_diagram/rr_diagram.dart";
+import "rule.dart";
+import "grammar.dart";
 
 abstract class RuleLinkProvider {
   String getLink(String ruleName);
@@ -17,20 +17,20 @@ class DefaultRuleLinkProvider implements RuleLinkProvider {
   }
 }
 
-class GrammarToRRDiagram {
+class GrammarToRrDiagram {
   final String linkBase;
   late RuleLinkProvider ruleLinkProvider;
   String? ruleConsideredAsLineBreak;
 
-  GrammarToRRDiagram({this.linkBase = "#"}) {
+  GrammarToRrDiagram({this.linkBase = "#"}) {
     ruleLinkProvider = DefaultRuleLinkProvider(linkBase);
   }
 
-  RRDiagram convert(Rule rule) {
-    return rule.toRRDiagram(this);
+  RrDiagram convert(Rule rule) {
+    return rule.toRrDiagram(this);
   }
 
-  List<RRDiagram> convertGrammar(Grammar grammar) {
+  List<RrDiagram> convertGrammar(Grammar grammar) {
     return grammar.rules.map((rule) => convert(rule)).toList();
   }
 }

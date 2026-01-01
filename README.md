@@ -79,4 +79,4 @@ Contributions are welcome! Please file issues or send pull requests.
 
 ## License
 
-See LICENSE file (if available) or checking the repository settings.
+See LICENSE.txt file - spoiler alert: it's Apache License 2.0.

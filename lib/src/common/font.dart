@@ -14,6 +14,6 @@ class Font {
 
   @override
   String toString() {
-    return 'Font(name: $name, size: $size, bold: $isBold, italic: $isItalic)';
+    return "Font(name: $name, size: $size, bold: $isBold, italic: $isItalic)";
   }
 }

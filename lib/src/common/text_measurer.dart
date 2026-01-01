@@ -1,4 +1,4 @@
-import 'font.dart';
+import "font.dart";
 
 /// Represents the dimensions of a block of text.
 class TextDimensions {

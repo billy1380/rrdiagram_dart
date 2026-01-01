@@ -1,10 +1,18 @@
-import '../rrdiagram/rr_element.dart';
-import 'grammar_to_rr_diagram.dart';
+import "../rr_diagram/rr_element.dart";
+import "grammar_to_rr_diagram.dart";
+import "grammar_to_bnf.dart";
 
 abstract class Expression {
-  RRElement toRRElement(GrammarToRRDiagram grammarToRRDiagram);
+  RrElement toRrElement(GrammarToRrDiagram grammarToRrDiagram);
 
-  // toBNF is skipped for this port as per plan
+  void toBnf(GrammarToBnf grammarToBnf, StringBuffer sb, bool isNested);
+
+  @override
+  String toString() {
+    StringBuffer sb = StringBuffer();
+    toBnf(GrammarToBnf(), sb, false);
+    return sb.toString();
+  }
 }
 
 class Literal extends Expression {
@@ -13,8 +21,19 @@ class Literal extends Expression {
   Literal(this.text);
 
   @override
-  RRElement toRRElement(GrammarToRRDiagram grammarToRRDiagram) {
-    return RRText(RRTextType.literal, text, null);
+  RrElement toRrElement(GrammarToRrDiagram grammarToRrDiagram) {
+    return RrText(RrTextType.literal, text, null);
+  }
+
+  @override
+  void toBnf(GrammarToBnf grammarToBnf, StringBuffer sb, bool isNested) {
+    String c =
+        grammarToBnf.literalDefinitionSign == LiteralDefinitionSign.doubleQuote
+        ? '"'
+        : "'";
+    sb.write(c);
+    sb.write(text);
+    sb.write(c);
   }
 }
 
@@ -24,8 +43,15 @@ class SpecialSequence extends Expression {
   SpecialSequence(this.text);
 
   @override
-  RRElement toRRElement(GrammarToRRDiagram grammarToRRDiagram) {
-    return RRText(RRTextType.specialSequence, text, null);
+  RrElement toRrElement(GrammarToRrDiagram grammarToRrDiagram) {
+    return RrText(RrTextType.specialSequence, text, null);
+  }
+
+  @override
+  void toBnf(GrammarToBnf grammarToBnf, StringBuffer sb, bool isNested) {
+    sb.write("(? ");
+    sb.write(text);
+    sb.write(" ?)");
   }
 }
 
@@ -35,16 +61,26 @@ class RuleReference extends Expression {
   RuleReference(this.ruleName);
 
   @override
-  RRElement toRRElement(GrammarToRRDiagram grammarToRRDiagram) {
-    if (grammarToRRDiagram.ruleConsideredAsLineBreak == ruleName) {
-      return RRBreak();
+  RrElement toRrElement(GrammarToRrDiagram grammarToRrDiagram) {
+    if (grammarToRrDiagram.ruleConsideredAsLineBreak == ruleName) {
+      return RrBreak();
     }
-    RuleLinkProvider ruleLinkProvider = grammarToRRDiagram.ruleLinkProvider;
-    return RRText(
-      RRTextType.rule,
+    RuleLinkProvider ruleLinkProvider = grammarToRrDiagram.ruleLinkProvider;
+    return RrText(
+      RrTextType.rule,
       ruleName,
       ruleLinkProvider.getLink(ruleName),
     );
+  }
+
+  @override
+  void toBnf(GrammarToBnf grammarToBnf, StringBuffer sb, bool isNested) {
+    sb.write(ruleName);
+    String? ruleConsideredAsLineBreak = grammarToBnf.ruleConsideredAsLineBreak;
+    if (ruleConsideredAsLineBreak != null &&
+        ruleConsideredAsLineBreak == ruleName) {
+      sb.write("\n");
+    }
   }
 }
 
@@ -54,11 +90,11 @@ class Sequence extends Expression {
   Sequence(this.expressions);
 
   @override
-  RRElement toRRElement(GrammarToRRDiagram grammarToRRDiagram) {
-    List<RRElement> rrElementList = [];
+  RrElement toRrElement(GrammarToRrDiagram grammarToRrDiagram) {
+    List<RrElement> rrElementList = [];
     for (int i = 0; i < expressions.length; i++) {
       Expression expression = expressions[i];
-      RRElement rrElement = expression.toRRElement(grammarToRRDiagram);
+      RrElement rrElement = expression.toRrElement(grammarToRrDiagram);
 
       // Treat special case of: "a (',' a)*" and "a (a)*"
       if (i < expressions.length - 1 &&
@@ -73,8 +109,8 @@ class Sequence extends Expression {
             repetitionExpression.ruleName == ruleLink.ruleName) {
           int? maxRepetitionCount = repetition.maxRepetitionCount;
           if (maxRepetitionCount == null || maxRepetitionCount > 1) {
-            rrElement = RRLoop(
-              ruleLink.toRRElement(grammarToRRDiagram),
+            rrElement = RrLoop(
+              ruleLink.toRrElement(grammarToRrDiagram),
               null,
               repetition.minRepetitionCount,
               maxRepetitionCount,
@@ -91,9 +127,9 @@ class Sequence extends Expression {
                   ruleLink.ruleName) {
             int? maxRepetitionCount = repetition.maxRepetitionCount;
             if (maxRepetitionCount == null || maxRepetitionCount > 1) {
-              rrElement = RRLoop(
-                ruleLink.toRRElement(grammarToRRDiagram),
-                subExpressions[0].toRRElement(grammarToRRDiagram),
+              rrElement = RrLoop(
+                ruleLink.toRrElement(grammarToRrDiagram),
+                subExpressions[0].toRrElement(grammarToRrDiagram),
                 repetition.minRepetitionCount,
                 maxRepetitionCount,
               );
@@ -104,7 +140,35 @@ class Sequence extends Expression {
       }
       rrElementList.add(rrElement);
     }
-    return RRSequence(rrElementList);
+    return RrSequence(rrElementList);
+  }
+
+  @override
+  void toBnf(GrammarToBnf grammarToBnf, StringBuffer sb, bool isNested) {
+    if (expressions.isEmpty) {
+      sb.write("( )");
+      return;
+    }
+    if (isNested && expressions.length > 1) {
+      sb.write("( ");
+    }
+    bool isCommaSeparator = grammarToBnf.isCommaSeparator;
+    for (int i = 0; i < expressions.length; i++) {
+      if (i > 0) {
+        if (isCommaSeparator) {
+          sb.write(" ,");
+        }
+        sb.write(" ");
+      }
+      expressions[i].toBnf(
+        grammarToBnf,
+        sb,
+        expressions.length == 1 && isNested || !isCommaSeparator,
+      );
+    }
+    if (isNested && expressions.length > 1) {
+      sb.write(" )");
+    }
   }
 }
 
@@ -114,11 +178,60 @@ class Choice extends Expression {
   Choice(this.expressions);
 
   @override
-  RRElement toRRElement(GrammarToRRDiagram grammarToRRDiagram) {
-    List<RRElement> rrElements = expressions
-        .map((e) => e.toRRElement(grammarToRRDiagram))
+  RrElement toRrElement(GrammarToRrDiagram grammarToRrDiagram) {
+    List<RrElement> rrElements = expressions
+        .map((e) => e.toRrElement(grammarToRrDiagram))
         .toList();
-    return RRChoice(rrElements);
+    return RrChoice(rrElements);
+  }
+
+  @override
+  void toBnf(GrammarToBnf grammarToBnf, StringBuffer sb, bool isNested) {
+    List<Expression> expressionList = [];
+    bool hasNoop = false;
+    for (Expression expression in expressions) {
+      if (expression is Sequence && expression.expressions.isEmpty) {
+        hasNoop = true;
+      } else {
+        expressionList.add(expression);
+      }
+    }
+    if (expressionList.isEmpty) {
+      sb.write("( )");
+    } else if (hasNoop && expressionList.length == 1) {
+      bool isUsingMultiplicationTokens =
+          grammarToBnf.isUsingMultiplicationTokens;
+      if (!isUsingMultiplicationTokens) {
+        sb.write("[ ");
+      }
+      expressionList[0].toBnf(grammarToBnf, sb, isUsingMultiplicationTokens);
+      if (!isUsingMultiplicationTokens) {
+        sb.write(" ]");
+      }
+    } else {
+      bool isUsingMultiplicationTokens =
+          grammarToBnf.isUsingMultiplicationTokens;
+      if (hasNoop && !isUsingMultiplicationTokens) {
+        sb.write("[ ");
+      } else if (hasNoop || isNested && expressionList.length > 1) {
+        sb.write("( ");
+      }
+      int count = expressionList.length;
+      for (int i = 0; i < count; i++) {
+        if (i > 0) {
+          sb.write(" | ");
+        }
+        expressionList[i].toBnf(grammarToBnf, sb, false);
+      }
+      if (hasNoop && !isUsingMultiplicationTokens) {
+        sb.write(" ]");
+      } else if (hasNoop || isNested && expressionList.length > 1) {
+        sb.write(" )");
+        if (hasNoop) {
+          sb.write("?");
+        }
+      }
+    }
   }
 }
 
@@ -130,28 +243,109 @@ class Repetition extends Expression {
   Repetition(this.expression, this.minRepetitionCount, this.maxRepetitionCount);
 
   @override
-  RRElement toRRElement(GrammarToRRDiagram grammarToRRDiagram) {
-    RRElement rrElement = expression.toRRElement(grammarToRRDiagram);
+  RrElement toRrElement(GrammarToRrDiagram grammarToRrDiagram) {
+    RrElement rrElement = expression.toRrElement(grammarToRrDiagram);
     if (minRepetitionCount == 0) {
       if (maxRepetitionCount == null || maxRepetitionCount! > 1) {
-        return RRChoice([
-          RRLoop(
+        return RrChoice([
+          RrLoop(
             rrElement,
             null,
             0,
             maxRepetitionCount == null ? null : maxRepetitionCount! - 1,
           ),
-          RRLine(),
+          RrLine(),
         ]);
       }
-      return RRChoice([rrElement, RRLine()]);
+      return RrChoice([rrElement, RrLine()]);
     }
-    return RRLoop(
+    return RrLoop(
       rrElement,
       null,
       minRepetitionCount - 1,
       maxRepetitionCount == null ? null : maxRepetitionCount! - 1,
     );
+  }
+
+  @override
+  void toBnf(GrammarToBnf grammarToBnf, StringBuffer sb, bool isNested) {
+    bool isUsingMultiplicationTokens = grammarToBnf.isUsingMultiplicationTokens;
+    if (maxRepetitionCount == null) {
+      if (minRepetitionCount > 0) {
+        if (minRepetitionCount == 1 && isUsingMultiplicationTokens) {
+          expression.toBnf(grammarToBnf, sb, true);
+          sb.write("+");
+        } else {
+          if (isNested) {
+            sb.write("( ");
+          }
+          if (minRepetitionCount > 1) {
+            sb.write("$minRepetitionCount");
+            sb.write(" * ");
+          }
+          expression.toBnf(grammarToBnf, sb, false);
+          if (grammarToBnf.isCommaSeparator) {
+            sb.write(" ,");
+          }
+          sb.write(" ");
+          sb.write("{ ");
+          expression.toBnf(grammarToBnf, sb, false);
+          sb.write(" }");
+          if (isNested) {
+            sb.write(" )");
+          }
+        }
+      } else {
+        if (isUsingMultiplicationTokens) {
+          expression.toBnf(grammarToBnf, sb, true);
+          sb.write("*");
+        } else {
+          sb.write("{ ");
+          expression.toBnf(grammarToBnf, sb, false);
+          sb.write(" }");
+        }
+      }
+    } else {
+      if (minRepetitionCount == 0) {
+        if (maxRepetitionCount == 1 && isUsingMultiplicationTokens) {
+          expression.toBnf(grammarToBnf, sb, true);
+          sb.write("?");
+        } else {
+          if (maxRepetitionCount! > 1) {
+            sb.write("$maxRepetitionCount");
+            sb.write(" * ");
+          }
+          sb.write("[ ");
+          expression.toBnf(grammarToBnf, sb, false);
+          sb.write(" ]");
+        }
+      } else {
+        if (minRepetitionCount == maxRepetitionCount) {
+          sb.write("$minRepetitionCount");
+          sb.write(" * ");
+          expression.toBnf(grammarToBnf, sb, isNested);
+        } else {
+          if (isNested) {
+            sb.write("( ");
+          }
+          sb.write("$minRepetitionCount");
+          sb.write(" * ");
+          expression.toBnf(grammarToBnf, sb, false);
+          if (grammarToBnf.isCommaSeparator) {
+            sb.write(" ,");
+          }
+          sb.write(" ");
+          sb.write("${maxRepetitionCount! - minRepetitionCount}");
+          sb.write(" * ");
+          sb.write("[ ");
+          expression.toBnf(grammarToBnf, sb, false);
+          sb.write(" ]");
+          if (isNested) {
+            sb.write(" )");
+          }
+        }
+      }
+    }
   }
 }
 
@@ -161,8 +355,13 @@ class Optional extends Expression {
   Optional(this.expression);
 
   @override
-  RRElement toRRElement(GrammarToRRDiagram grammarToRRDiagram) {
-    return Choice([expression, Sequence([])]).toRRElement(grammarToRRDiagram);
+  RrElement toRrElement(GrammarToRrDiagram grammarToRrDiagram) {
+    return Choice([expression, Sequence([])]).toRrElement(grammarToRrDiagram);
+  }
+
+  @override
+  void toBnf(GrammarToBnf grammarToBnf, StringBuffer sb, bool isNested) {
+    Choice([expression, Sequence([])]).toBnf(grammarToBnf, sb, isNested);
   }
 }
 
@@ -172,8 +371,13 @@ class OneOrMore extends Expression {
   OneOrMore(this.expression);
 
   @override
-  RRElement toRRElement(GrammarToRRDiagram grammarToRRDiagram) {
-    return Repetition(expression, 1, null).toRRElement(grammarToRRDiagram);
+  RrElement toRrElement(GrammarToRrDiagram grammarToRrDiagram) {
+    return Repetition(expression, 1, null).toRrElement(grammarToRrDiagram);
+  }
+
+  @override
+  void toBnf(GrammarToBnf grammarToBnf, StringBuffer sb, bool isNested) {
+    Repetition(expression, 1, null).toBnf(grammarToBnf, sb, isNested);
   }
 }
 
@@ -183,7 +387,12 @@ class ZeroOrMore extends Expression {
   ZeroOrMore(this.expression);
 
   @override
-  RRElement toRRElement(GrammarToRRDiagram grammarToRRDiagram) {
-    return Repetition(expression, 0, null).toRRElement(grammarToRRDiagram);
+  RrElement toRrElement(GrammarToRrDiagram grammarToRrDiagram) {
+    return Repetition(expression, 0, null).toRrElement(grammarToRrDiagram);
+  }
+
+  @override
+  void toBnf(GrammarToBnf grammarToBnf, StringBuffer sb, bool isNested) {
+    Repetition(expression, 0, null).toBnf(grammarToBnf, sb, isNested);
   }
 }
