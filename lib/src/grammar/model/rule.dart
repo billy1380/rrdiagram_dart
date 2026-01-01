@@ -9,15 +9,15 @@ class Rule {
 
   Rule(this.name, this.expression);
 
-  RrDiagram toRrDiagram(GrammarToRrDiagram grammarToRRDiagram) {
-    return RrDiagram(expression.toRrElement(grammarToRRDiagram));
+  RrDiagram toRrDiagram(GrammarToRrDiagram grammarToRrDiagram) {
+    return RrDiagram(expression.toRrElement(grammarToRrDiagram));
   }
 
-  String toBnf(GrammarToBnf grammarToBNF) {
+  String toBnf(GrammarToBnf grammarToBnf) {
     StringBuffer sb = StringBuffer();
     sb.write(name);
     sb.write(" ");
-    switch (grammarToBNF.ruleDefinitionSign) {
+    switch (grammarToBnf.ruleDefinitionSign) {
       case RuleDefinitionSign.equal:
         sb.write("=");
         break;
@@ -29,7 +29,7 @@ class Rule {
         break;
     }
     sb.write(" ");
-    expression.toBnf(grammarToBNF, sb, false);
+    expression.toBnf(grammarToBnf, sb, false);
     sb.write(";");
     return sb.toString();
   }
